@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3c.org/TR/html4/loose.dtd">
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="content-script-type" content="text/javascript">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSONPを使ってJavascriptだけでマッシュアップするサンプル</title>
+</head>
+
+<body>
+    <input type="text" name="query" id="query" value="">
+    
+    <input type="button" value="検索" onclick="showAddress()">
+
+    <script type=text/javascript>
+        const appid = "dj00aiZpPVh2N3kzZUxwelF5biZzPWNvbnN1bWVyc2VjcmV0Jng9ZDM-";
+        //検索ボタンが押されたら
+        function showAddress() {
+            var query = document.getElementById('query').value;
+            var url = "https://map.yahooapis.jp/search/local/V1/localSearch?appid=" + appid + "&query=" + encodeURI(query) + "&output=json&sort=kana&callback=showResult";
+            var target = document.createElement('script');
+            target.charset = "utf-8";
+            target.src = url;
+            document.body.appendChild(target);
+        }
+
+        function showResult(result) {
+            //表示内容削除
+            delAllChild("link");
+            delAllChild("weather");
+            //検索結果表示
+            var cnt = result.ResultInfo.Count;
+            for (let i = 0; i < cnt; i++) {
+                var a = document.createElement('a');
+                a.href = "javascript:OnLinkClick('" + result.Feature[i].Geometry.Coordinates + "');";
+                var str = document.createTextNode(result.Feature[i].Name);
+                a.appendChild(str);
+                document.getElementById("link").appendChild(a);
+                document.getElementById("link").appendChild(document.createElement('br'));
+            }
+        }
+        //検索結果が推されたら、、、
+        function OnLinkClick(str) {
+            var coordinates = str;
+            var url = "https://map.yahooapis.jp/weather/V1/place?coordinates=" + coordinates + "&appid=" + appid + "&output=json&callback=showWeather";
+            var target = document.createElement('script');
+            target.charset = "utf-8";
+            target.src = url;
+            document.body.appendChild(target);
+        }
+
+        function showWeather(result) {
+            //表示内容削除
+            delAllChild("weather");
+
+            //地点情報表示
+            var h4 = document.createElement("h4");
+            var place = document.createTextNode(result.Feature[0].Name);
+            h4.appendChild(place);
+            document.getElementById("weather").appendChild(h4);
+            for (let i = 0; i < 7; i++) {
+                var p = document.createElement('p');
+                //日時情報取得
+                var dt = document.createTextNode(result.Feature[0].Property.WeatherList.Weather[i].Date);
+                //降水量
+                var rain = document.createTextNode(": " + result.Feature[0].Property.WeatherList.Weather[i].Rainfall + "mm/h");
+                p.appendChild(dt);
+                p.appendChild(rain);
+                document.getElementById("weather").appendChild(p);
+            }
+        }
+        //ID指定で要素削除
+        function delAllChild(id) {
+            var parent = document.getElementById(id);
+            while (parent.lastChild) {
+                parent.removeChild(parent.lastChild);
+            }
+        }
+    </script>
+    <h3>検索結果</h3>
+    <div id="link">
+
+    </div>
+    <h3>天気（現況）</h3>
+    <div id="weather">
+
+    </div>
+</body>
+
+</html>
